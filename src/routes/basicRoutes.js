@@ -7,7 +7,7 @@ router.get('/', (req, res) => {
     res.json({
         success: true,
         message: 'Welcome to User Management API',
-        version: '1.0.0'
+        version: '3.1.0'
     });
 });
 
@@ -16,6 +16,7 @@ router.get('/health', async (req, res) => {
     try {
         // Check database connection
         await sequelize.authenticate();
+
 
         res.json({
             success: true,

@@ -10,6 +10,6 @@ module.exports = {
     pass: process.env.EMAIL_PASS
   },
   tls: {
-    rejectUnauthorized: false
+    rejectUnauthorized: true
   }
 }; 

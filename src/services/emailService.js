@@ -1,70 +1,56 @@
 const nodemailer = require('nodemailer');
 const config = require('../config/emailConfig');
 
-let transporter = null;
+class EmailService {
+  static async createTransporter() {
+    try {
+      const transporter = nodemailer.createTransport(config);
 
-// Initialize transporter with retry
-const initializeTransporter = async (retries = 3) => {
-  try {
-    if (!transporter) {
-      transporter = nodemailer.createTransport(config);
-
-      // Verify connection
+      // Verify connection configuration
       await transporter.verify();
-      console.log('Email server is ready to send messages');
+      console.log('Email service is ready');
+      return transporter;
+    } catch (error) {
+      console.error('Email service configuration error:', error);
+      throw error;
     }
-    return transporter;
-  } catch (error) {
-    console.error('Email configuration error:', error);
-    if (retries > 0) {
-      console.log(`Retrying email configuration... (${retries} attempts left)`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-      return initializeTransporter(retries - 1);
-    }
-    throw new Error('Failed to initialize email transport');
   }
-};
 
-const sendEmailNotification = async (emails) => {
-  try {
-    // Ensure transporter is initialized
-    const emailTransporter = await initializeTransporter();
-
-    console.log('Attempting to send emails to:', emails);
-
-    // Split emails into chunks of 50 to avoid Gmail limits
-    const chunkSize = 50;
-    const emailChunks = [];
-    for (let i = 0; i < emails.length; i += chunkSize) {
-      emailChunks.push(emails.slice(i, i + chunkSize));
+  static async sendEmailNotification(emails) {
+    if (!emails || emails.length === 0) {
+      console.log('No emails to send');
+      return;
     }
 
-    // Send emails in chunks
-    for (const chunk of emailChunks) {
-      const info = await emailTransporter.sendMail({
-        from: `"User Management System" <${config.auth.user}>`,
-        bcc: chunk.join(', '), // Use BCC for privacy
-        subject: 'Welcome to Our Platform ✔',
-        text: 'Your data has been successfully uploaded to our platform.'
-      });
+    try {
+      const transporter = await this.createTransporter();
 
-      console.log('Emails sent successfully. Message ID:', info.messageId);
+      // Split emails into chunks of 50 to avoid Gmail limits
+      const chunkSize = 50;
+      const emailChunks = [];
+      for (let i = 0; i < emails.length; i += chunkSize) {
+        emailChunks.push(emails.slice(i, i + chunkSize));
+      }
+
+      for (const chunk of emailChunks) {
+        const mailOptions = {
+          from: `"User Management System" <${config.auth.user}>`,
+          bcc: chunk.join(', '), // Use BCC for privacy
+          subject: 'Welcome to Our Platform ✔',
+          text: 'Your data has been successfully uploaded to our platform.',
+          html: '<b>Your data has been successfully uploaded to our platform.</b>'
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', info.messageId);
+      }
+
+      return { success: true, message: 'Emails sent successfully' };
+    } catch (error) {
+      console.error('Failed to send emails:', error);
+      throw new Error(`Email sending failed: ${error.message}`);
     }
-
-    return { success: true, message: 'All emails sent successfully' };
-  } catch (error) {
-    console.error('Email sending failed:', error);
-
-    // Reset transporter on connection errors
-    if (error.code === 'ESOCKET' || error.code === 'ECONNECTION') {
-      transporter = null;
-    }
-
-    throw new Error(`Failed to send emails: ${error.message}`);
   }
-};
+}
 
-// Initialize transporter on module load
-initializeTransporter().catch(console.error);
-
-module.exports = { sendEmailNotification }; 
+module.exports = { sendEmailNotification: EmailService.sendEmailNotification.bind(EmailService) }; 

@@ -1,6 +1,7 @@
 const { parseCSV, saveUsersToDB } = require('../services/csvService');
 const { sendEmailNotification } = require('../services/emailService');
 const User = require('../models/userModel');
+const fs = require('fs');
 
 exports.createUsers = async (req, res) => {
   let filePath;
@@ -35,29 +36,31 @@ exports.createUsers = async (req, res) => {
     const savedUsers = await saveUsersToDB(users);
     console.log('Users successfully saved to database:', savedUsers.length);
 
-    // Extract all email addresses
+    // Extract emails
     const emails = savedUsers.map(user => user.email);
 
+    // Send emails asynchronously
     try {
-      // Send email notifications to all users at once
       await sendEmailNotification(emails);
     } catch (emailError) {
       console.error('Email notification failed:', emailError);
-      // Continue with the response even if email sending fails
+      // Continue with success response even if email fails
       return res.status(200).json({
         success: true,
-        message: 'CSV data uploaded successfully, but email notifications failed.',
+        message: 'Users created successfully, but email notifications failed',
         error: emailError.message,
         usersCount: savedUsers.length
       });
     }
 
-    // Clean up - delete the uploaded file
-    require('fs').unlinkSync(filePath);
+    // Clean up uploaded file
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
 
     res.status(200).json({
       success: true,
-      message: 'CSV data uploaded and users notified.',
+      message: 'Users created and notified successfully',
       usersCount: savedUsers.length
     });
   } catch (error) {
@@ -68,8 +71,8 @@ exports.createUsers = async (req, res) => {
     });
 
     // Clean up on error
-    if (filePath && require('fs').existsSync(filePath)) {
-      require('fs').unlinkSync(filePath);
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
 
     // Handle different types of errors
@@ -83,7 +86,7 @@ exports.createUsers = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: error.message || 'Error uploading CSV data'
+      error: error.message || 'Failed to process users'
     });
   }
 };
