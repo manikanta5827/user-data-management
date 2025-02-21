@@ -10,8 +10,8 @@ This project is a backend service that manages user data and implements Twitter 
 Start by cloning the project repository from GitHub:  
 
 ```bash  
-git clone <your-repository-url>  
-cd <your-project-directory>  
+git clone <https://github.com/manikanta5827/user-data-management>  
+cd <user-data-management>  
 ```  
 
 ### **2. Install Dependencies**  
