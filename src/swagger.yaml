@@ -1,0 +1,265 @@
+openapi: 3.0.0
+info:
+  title: User Management API
+  description: API documentation for user management system
+  version: 3.1.0
+  contact:
+    email: your-email@domain.com
+
+servers:
+  - url: https://e958-2409-408c-2eb6-4b56-f85f-8eb6-3879-822a.ngrok-free.app
+    description: Development server
+
+tags:
+  - name: Basic
+    description: Basic system endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Backup
+    description: System backup and restore endpoints
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error description
+        error:
+          type: string
+          example: Error details
+
+    HealthCheck:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Service is healthy
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [connected, disconnected]
+            server:
+              type: string
+              enum: [running]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "123"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john@example.com"
+
+paths:
+  /:
+    get:
+      tags:
+        - Basic
+      summary: Root endpoint
+      description: Returns API welcome message and version
+      responses:
+        '200':
+          description: Welcome response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Welcome to User Management API
+                  version:
+                    type: string
+                    example: 3.1.0
+
+  /health:
+    get:
+      tags:
+        - Basic
+      summary: Health check endpoint
+      description: Returns the health status of the API and database
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+
+  /api/upload:
+    post:
+      tags:
+        - Users
+      summary: Upload users via CSV
+      description: Upload a CSV file to create multiple users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file containing user data
+      responses:
+        '200':
+          description: Users created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Users created successfully
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve list of all users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/backup:
+    get:
+      tags:
+        - Backup
+      summary: Download system backup
+      description: Download a backup of the system data
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Backup file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/restore:
+    post:
+      tags:
+        - Backup
+      summary: Restore system from backup
+      description: Restore system using a backup file
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Backup file to restore from
+      responses:
+        '200':
+          description: System restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: System restored successfully
+        '400':
+          description: Invalid backup file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 

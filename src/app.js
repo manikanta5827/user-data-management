@@ -8,6 +8,9 @@ const errorHandler = require('./middlewares/errorMiddleware');
 const morgan = require('morgan');
 const authRoutes = require('./routes/authRoutes');
 const validateEnv = require('./config/envConfig');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const swaggerDocument = YAML.load('./src/swagger.yaml');
 
 // Load and validate environment variables
 dotenv.config();
@@ -51,6 +54,9 @@ app.use('/', basicRoutes);
 // API routes
 app.use('/api', userRoutes);
 app.use('/auth', authRoutes);
+
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Error handling middleware
 app.use(errorHandler);
