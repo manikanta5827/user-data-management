@@ -7,7 +7,7 @@ info:
     email: your-email@domain.com
 
 servers:
-  - url: https://e958-2409-408c-2eb6-4b56-f85f-8eb6-3879-822a.ngrok-free.app
+  - url: https://user-data-management-n4i6.onrender.com
     description: Development server
 
 tags:
