@@ -18,15 +18,20 @@ validateEnv();
 
 const app = express();
 
+// Add before other middleware
+app.enable('trust proxy');
+app.set('trust proxy', 1);
+
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+  },
+  proxy: true
 }));
 
 // Middleware
